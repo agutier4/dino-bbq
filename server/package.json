@@ -1,0 +1,23 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "description": "dino-bbq server",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/agutier4/dino-bbq.git"
+  },
+  "author": "Andrew Gutierrez",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/agutier4/dino-bbq/issues"
+  },
+  "homepage": "https://github.com/agutier4/dino-bbq#readme",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
