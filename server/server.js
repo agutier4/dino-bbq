@@ -15,12 +15,43 @@ const ascii = String.raw`
 
 `
 
-var nodes = []
 logger.info(ascii)
 logger.info('Initializing Dino server...');
 
 //=============================================
-//             Start MQTT Broker
+//             Node Cache
+//=============================================
+
+var nodeCache = new Map();
+var healthyTimeout = 6000;
+var slowTimeout = 10000;
+
+function nodeStateJSON(){
+    var healthy = [];
+    var slow = [];
+    var expired = [];
+
+    for (let [id, lastHeartbeat] of nodeCache) {
+        var dt = Date.now() - lastHeartbeat;        
+
+        if (dt < healthyTimeout){
+            // node healthy
+            healthy.push(id);
+        } else if (dt < slowTimeout){
+            // node is slow to respond
+            slow.push(id);
+        } else {
+            // node is expired
+            expired.push(id);
+        }
+    }
+
+    return {'healthy': healthy, 'slow': slow, 'expired': expired};
+}
+
+
+//=============================================
+//             MQTT Broker
 //=============================================
 const aedes = require('aedes')()
 const broker = require('net').createServer(aedes.handle)
@@ -42,24 +73,35 @@ aedes.on('subscribe', function (subscriptions, client) {
     logger.info('[MQTT] Client %s subscribed to topics: %s', client.id, subscriptions.map(s => s.topic).join('\n'));
 })
 
-//=============================================
-//             MQTT Subscriptions
-//=============================================
-aedes.subscribe('nodes',function(packet, cb){
-    // TODO: maintain nodes
-    nodes = JSON.parse(packet.payload.toString())
-    logger.info('[MQTT] Received node update: %s', nodes);
+aedes.subscribe('nodes/heartbeat',function(packet, cb){    
+    var update = JSON.parse(packet.payload.toString())
+    logger.info('[MQTT] Received node update: %s', update);
+
+    if (Array.isArray(update)){
+        for (const n of update) {
+            nodeCache.set(n, Date.now());
+        }
+    } else{
+        logger.warn('[MQTT] Received malformed heatbeat payload: "%s"', packet.payload.toString());
+    }
 })
 
-//=============================================
-//           HTTP Endpoint Mappings
-//=============================================
-const express = require('express')
-const app = express()
-const fs = require('fs')
-var expressWs = require('express-ws')(app);
+logger.info('[MQTT] MQTT broker running');
 
-app.use(express.static('public'))
+//=============================================
+//           HTTP Server
+//=============================================
+const http = require('http');
+const express = require('express');
+const bodyParser = require('body-parser');
+const fs = require('fs');
+
+const app = express();
+const server = http.createServer(app);
+
+app.use(express.static('public'));
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json())
 
 app.get('/', function (req, res) {
     fs.readFile('public/html/index.html',function(err, data) {
@@ -69,7 +111,11 @@ app.get('/', function (req, res) {
     });
 });
 
-// roar API endpoint 
+app.get('/api/nodes', function (req, res) {
+    logger.info('[HTTP] Nodes API request');
+    res.json(nodeStateJSON());
+});
+
 app.get('/api/roar', function (req, res) {
     logger.info('[HTTP] Roar API request');
     aedes.publish({topic:'cmd', payload:'{"id":255}'}, null);
@@ -79,9 +125,22 @@ app.get('/api/roar', function (req, res) {
     res.end();
 });
 
-app.ws('/cmd', function(ws, req) {
+server.listen(3000, function () {
+    var port = server.address().port;
+    logger.info('[HTTP] Server started at http://localhost:%s/', port);
+});
+
+logger.info('[HTTP] HTTP server running');
+
+//=============================================
+//          WebSocket Server
+//=============================================
+const WebSocket = require('ws');
+const wss = new WebSocket.Server({server});
+
+wss.on('connection', function(ws){
     logger.info('[WS] Client connected');
-    ws.send(JSON.stringify(nodes));
+    ws.send(JSON.stringify(nodeStateJSON()));
 
     ws.on('message', function(msg) {
         var cmdJson = '{"id":' + parseInt(msg) + '}';
@@ -96,11 +155,18 @@ app.ws('/cmd', function(ws, req) {
         logger.info('[WS] Client disconnected');
     });
 });
+logger.info('[WS] WebSocket server running');
 
 //=============================================
-//             Start HTTP Server
+//          Broadcast Node Connections
 //=============================================
-var server = app.listen(3000, function () {
-    var port = server.address().port;
-    logger.info('[HTTP] Server started at http://localhost:%s/', port);
-});
+function broadcastNodeState(){
+    var nodeState = nodeStateJSON();
+    var stateStr = JSON.stringify(nodeState);
+    logger.info('[WS] Broadcast node state: %s', stateStr);
+
+    wss.clients.forEach(function(ws){
+        ws.send(stateStr);
+    });
+}
+setInterval(broadcastNodeState, 5000);

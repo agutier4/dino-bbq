@@ -33,5 +33,5 @@ function closeSocket() {
     socket.close();
 }
 
-const socketUrl = 'ws://'+location.host+'/cmd'
+const socketUrl = 'ws://'+location.host
 var socket = connectSocket(socketUrl);
