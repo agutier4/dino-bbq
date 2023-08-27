@@ -1,8 +1,18 @@
 <!DOCTYPE html>
 <html>
-    <head</head>
+    <head>
+        <title>Dino BBQ Control</title>
+        <link rel="icon" type="img/x-icon" href="/img/logo.png">
+        <script src="js/socket.js"></script>
+    </head>
     <body>
         <h1>Dino server</h1>
         <img src="img/logo.png" alt="Dino Logo"> 
+
+        <form>
+            Dino ID: <input type="text" id="myMessage" name="myMessage" value="0"><br>
+        </form>
+
+        <input type="button" onclick="sendMsg()" value="Send message" />
     </body>
 </html>
