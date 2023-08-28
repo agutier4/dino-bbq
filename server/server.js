@@ -23,6 +23,7 @@ logger.info('Initializing Dino server...');
 //=============================================
 
 var nodeCache = new Map();
+var nodeBattery = new Map();
 var healthyTimeout = 6000;
 var slowTimeout = 10000;
 
@@ -35,20 +36,16 @@ function nodeStateJSON(){
         var dt = Date.now() - lastHeartbeat;        
 
         if (dt < healthyTimeout){
-            // node healthy
             healthy.push(id);
         } else if (dt < slowTimeout){
-            // node is slow to respond
             slow.push(id);
         } else {
-            // node is expired
             expired.push(id);
         }
     }
 
     return {'healthy': healthy, 'slow': slow, 'expired': expired};
 }
-
 
 //=============================================
 //             MQTT Broker
@@ -59,32 +56,46 @@ const port = 1883
 
 broker.listen(port, function () {
   logger.info('[MQTT] Server started and listening on port %s', port);
-})
+});
 
 aedes.on('client', function (client) {
     logger.info('[MQTT] Client Connected: %s',client.id);
-})
+});
 
 aedes.on('clientDisconnect', function (client) {
     logger.info('[MQTT] Client Disconnected: %s',client.id);
-})
+});
 
 aedes.on('subscribe', function (subscriptions, client) {
     logger.info('[MQTT] Client %s subscribed to topics: %s', client.id, subscriptions.map(s => s.topic).join('\n'));
-})
+});
 
 aedes.subscribe('nodes/heartbeat',function(packet, cb){    
     var update = JSON.parse(packet.payload.toString())
-    logger.info('[MQTT] Received node update: %s', update);
+    logger.debug('[MQTT] Received node heartbeat: %s', update);
 
     if (Array.isArray(update)){
         for (const n of update) {
             nodeCache.set(n, Date.now());
         }
     } else{
-        logger.warn('[MQTT] Received malformed heatbeat payload: "%s"', packet.payload.toString());
+        logger.warn('[MQTT] Received malformed heartbeat payload: "%s"', packet.payload.toString());
     }
-})
+    cb();
+});
+
+aedes.subscribe('nodes/battery',function(packet, cb){    
+    logger.info('[MQTT] Received battery update: %s', packet.payload.toString());
+    cb();
+});
+
+aedes.on('connectionError', function(client, err){
+    logger.error("[MQTT] Client %s: %s", client.id, err.message);
+});
+
+aedes.on('clientError', function(client, err){
+    logger.error("[MQTT] Client %s: %s", client.id, err.message);
+});
 
 logger.info('[MQTT] MQTT broker running');
 
@@ -121,7 +132,7 @@ app.get('/api/roar', function (req, res) {
     aedes.publish({topic:'cmd', payload:'{"id":255}'}, null);
 
     res.writeHead(200, {'Content-Type': 'text/plain'});
-    res.write('SUCCESSS');
+    res.write('SUCCESS');
     res.end();
 });
 
