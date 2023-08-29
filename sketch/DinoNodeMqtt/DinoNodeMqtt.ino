@@ -3,10 +3,10 @@
 #include <ArduinoJson.h>
 #include "HT_SSD1306Wire.h"
 
-#define ID 1
+#define ID 2
 
 // Network confiuration
-const char* ssid = "CHANGE_ME";
+const char* ssid = "channelorange";
 const char* password = "CHANGE_ME";
 const char* mqtt_server = "192.168.86.33";
 
@@ -47,8 +47,8 @@ float readBattVoltage(const uint8_t& numSamples) {
  * Generate JSON status report
  * @param voltage battery voltage
  */ 
-String batteryReportJSON(const float& voltage){
-  return String("{\"id\":"+String(ID)+",\"voltage\":"+String(voltage).c_str()+"}");
+String statusReportJSON(const float& voltage){
+  return String("[{\"id\":"+String(ID)+",\"voltage\":"+String(voltage).c_str()+"}]");
 }
 
 /**
@@ -105,7 +105,7 @@ void reconnectMqtt() {
     oled.drawString(0, 20, "Node ID: " + String(ID));
     oled.drawString(0, 30, "Vbat: " + String(vBat) + "(V)");
     oled.display();
-    if (client.connect(String("DinoNode_" + ID).c_str())) {
+    if (client.connect(String("DinoNode_" + String(ID)).c_str())) {
       // success, subscribe to command topic
       client.subscribe("cmd");
     } else {
@@ -155,8 +155,7 @@ void loop() {
   vBat = readBattVoltage(20);
   if(now - lastStatus > 5000 && client.connected()){
     String payload("["+String(ID)+"]");
-    client.publish("nodes/heartbeat", payload.c_str());
-    client.publish("nodes/battery", batteryReportJSON(vBat).c_str());
+    client.publish("nodes/status", statusReportJSON(vBat).c_str());
     lastStatus = now;
   }
 

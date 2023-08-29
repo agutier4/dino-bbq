@@ -22,29 +22,28 @@ logger.info('Initializing Dino server...');
 //             Node Cache
 //=============================================
 
-var nodeCache = new Map();
-var nodeBattery = new Map();
+var nodeStatusCache = new Map();
 var healthyTimeout = 6000;
 var slowTimeout = 10000;
 
-function nodeStateJSON(){
-    var healthy = [];
-    var slow = [];
-    var expired = [];
+function nodeStatusJSON(){
+    var nodes = [];
+    for (let [id, status] of nodeStatusCache){
+        var node = {'id':id,
+                    'voltage': status.voltage}
 
-    for (let [id, lastHeartbeat] of nodeCache) {
-        var dt = Date.now() - lastHeartbeat;        
-
+        var dt = Date.now() - status.time;        
         if (dt < healthyTimeout){
-            healthy.push(id);
+            node.health = 'HEALTHY';
         } else if (dt < slowTimeout){
-            slow.push(id);
+            node.health = 'SLOW';
         } else {
-            expired.push(id);
+            node.health = 'EXPIRED';
         }
+        nodes.push(node);
     }
-
-    return {'healthy': healthy, 'slow': slow, 'expired': expired};
+     
+    return nodes;
 }
 
 //=============================================
@@ -70,22 +69,24 @@ aedes.on('subscribe', function (subscriptions, client) {
     logger.info('[MQTT] Client %s subscribed to topics: %s', client.id, subscriptions.map(s => s.topic).join('\n'));
 });
 
-aedes.subscribe('nodes/heartbeat',function(packet, cb){    
-    var update = JSON.parse(packet.payload.toString())
-    logger.debug('[MQTT] Received node heartbeat: %s', update);
+aedes.subscribe('nodes/status',function(packet, cb){    
+    logger.info('[MQTT] Received status update: %s', packet.payload.toString());
 
+    var update = JSON.parse(packet.payload.toString())
     if (Array.isArray(update)){
-        for (const n of update) {
-            nodeCache.set(n, Date.now());
+        for (const s of update) {
+            var id = s.id;
+            if (id != undefined){
+                var status = {'time':Date.now()}
+                status.voltage = s.voltage;
+                nodeStatusCache.set(id, status);
+            } else{
+                logger.warn('[MQTT] Received status with no ID: "%s"', packet.payload.toString());
+            }
         }
     } else{
-        logger.warn('[MQTT] Received malformed heartbeat payload: "%s"', packet.payload.toString());
+        logger.warn('[MQTT] Received malformed status payload: "%s"', packet.payload.toString());
     }
-    cb();
-});
-
-aedes.subscribe('nodes/battery',function(packet, cb){    
-    logger.info('[MQTT] Received battery update: %s', packet.payload.toString());
     cb();
 });
 
@@ -122,9 +123,9 @@ app.get('/', function (req, res) {
     });
 });
 
-app.get('/api/nodes', function (req, res) {
-    logger.info('[HTTP] Nodes API request');
-    res.json(nodeStateJSON());
+app.get('/api/nodes/status', function (req, res) {
+    logger.info('[HTTP] Node status API request');
+    res.json(nodeStatusJSON());
 });
 
 app.get('/api/roar', function (req, res) {
@@ -151,7 +152,7 @@ const wss = new WebSocket.Server({server});
 
 wss.on('connection', function(ws){
     logger.info('[WS] Client connected');
-    ws.send(JSON.stringify(nodeStateJSON()));
+    ws.send(JSON.stringify(nodeStatusJSON()));
 
     ws.on('message', function(msg) {
         var cmdJson = '{"id":' + parseInt(msg) + '}';
@@ -171,13 +172,16 @@ logger.info('[WS] WebSocket server running');
 //=============================================
 //          Broadcast Node Connections
 //=============================================
-function broadcastNodeState(){
-    var nodeState = nodeStateJSON();
+function broadcastNodeStatus(){
+    var nodeState = nodeStatusJSON();
     var stateStr = JSON.stringify(nodeState);
-    logger.info('[WS] Broadcast node state: %s', stateStr);
+    var nodeList = JSON.stringify(Array.from(nodeStatusCache.keys()))
+
+    logger.info('[WS] Broadcast state for nodes: %s', nodeList);
+    logger.debug('[WS] State: %s', stateStr);
 
     wss.clients.forEach(function(ws){
         ws.send(stateStr);
     });
 }
-setInterval(broadcastNodeState, 5000);
+setInterval(broadcastNodeStatus, 5000);
