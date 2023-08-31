@@ -1,2 +1,18 @@
+# Gitignore for Node.js project and common editors
+
+# JS build resources, logs, temp files
 node_modules
-package-lock.json
+dist
+npm-debug.log
+.env
+coverage
+.nyc_output/
+config/local.yml
+
+# OS temp files
+.DS_Store
+
+# Editors
+.idea/
+.idea_modules/
+tmp/

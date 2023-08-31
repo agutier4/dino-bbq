@@ -1,9 +1,5 @@
-const pino = require('pino')
-const logger = pino({
-  transport: {
-    target: 'pino-pretty'
-  },
-})
+import logger from './logger';
+
 const ascii = String.raw`
   _____  _               ____  ____   ____  
  |  __ \(_)             |  _ \|  _ \ / __ \ 
