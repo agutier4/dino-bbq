@@ -14,6 +14,19 @@ The `server` directory contains an ExpressJs webserver
 
 The `dashboard` directory contains a React UI which interacts with the API server to display tiles for each active node. When you click on the tile, an API request is sent to the node.
 
+## Running via Docker
+
+```
+docker-compose build
+docker-compose up
+```
+
+To run in background and restart automatically:
+
+```
+docker-compose up -d
+```
+
 ## Sketches
 
 The `sketch` directory contains the ESP node sketches:
