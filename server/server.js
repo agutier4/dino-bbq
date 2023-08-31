@@ -4,7 +4,6 @@ const logger = pino({
     target: 'pino-pretty'
   },
 })
-
 const ascii = String.raw`
   _____  _               ____  ____   ____  
  |  __ \(_)             |  _ \|  _ \ / __ \ 
@@ -26,9 +25,34 @@ var nodeStatusCache = new Map();
 var healthyTimeout = 6000;
 var slowTimeout = 10000;
 
+nodeStatusCache['1'] = {
+    'time': Date.now(),
+    'voltage': 0.00
+}
+nodeStatusCache['2'] = {
+    'time': Date.now(),
+    'voltage': 0.00
+}
+nodeStatusCache['3'] = {
+    'time': Date.now(),
+    'voltage': 0.00
+}
+nodeStatusCache['4'] = {
+    'time': Date.now(),
+    'voltage': 0.00
+}
+nodeStatusCache['5'] = {
+    'time': Date.now(),
+    'voltage': 0.00
+}
+nodeStatusCache['6'] = {
+    'time': Date.now(),
+    'voltage': 0.00
+}
+
 function nodeStatusJSON(){
     var nodes = [];
-    for (let [id, status] of nodeStatusCache){
+    for (let [id, status] of Object.entries(nodeStatusCache)){
         var node = {'id':id,
                     'voltage': status.voltage}
 
@@ -107,30 +131,32 @@ const http = require('http');
 const express = require('express');
 const bodyParser = require('body-parser');
 const fs = require('fs');
+const cors = require('cors')
+
 
 const app = express();
 const server = http.createServer(app);
 
-app.use(express.static('public'));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json())
 
-app.get('/', function (req, res) {
-    fs.readFile('public/html/index.html',function(err, data) {
-        res.writeHead(200, {'Content-Type': 'text/html'});
-        res.write(data);
-        res.end();
-    });
-});
+app.use(
+    cors({
+        origin: '*',
+        methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+        preflightContinue: false,
+        optionsSuccessStatus: 204,
+    })
+);
 
 app.get('/api/nodes/status', function (req, res) {
     logger.info('[HTTP] Node status API request');
     res.json(nodeStatusJSON());
 });
 
-app.get('/api/roar', function (req, res) {
-    logger.info('[HTTP] Roar API request');
-    aedes.publish({topic:'cmd', payload:'{"id":255}'}, null);
+app.post('/api/roar/:id', function (req, res) {
+    logger.info('[HTTP] Roar API request for node id ' + req.params.id);
+    aedes.publish({topic:'cmd', payload:`{"id":${req.params.id}}`}, null);
 
     res.writeHead(200, {'Content-Type': 'text/plain'});
     res.write('SUCCESS');
