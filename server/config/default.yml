@@ -1,0 +1,10 @@
+server:
+    port: 3000
+    corsOrigin: '*'
+logging:
+    level: 'debug'
+    color: true
+    showStackTraces: true
+nodes:
+    healthyTimeout: 6000
+    slowTimeout: 10000
