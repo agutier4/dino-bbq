@@ -4,7 +4,12 @@ services:
     build: server
     ports:
       - 3000:3000
+      - 1883:1883
   dashboard:
     build: dashboard
     ports:
       - 8000:80
+  dashboard-minimal:
+    build: dashboard-minimal
+    ports:
+      - 8001:80

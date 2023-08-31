@@ -7,6 +7,7 @@ RUN npm install pm2 pm2-logrotate -g \
 
 # Copy in the api files
 WORKDIR /app
+COPY ./config ./config
 COPY ./src ./src
 COPY ./.babelrc .
 COPY ./.eslintrc.json .
