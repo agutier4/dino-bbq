@@ -1,4 +1,5 @@
 import config from 'config';
+import logger from '../config/logger';
 
 const HEALTHY_TIMEOUT = config.get('nodes.healthyTimeout');
 const SLOW_TIMEOUT = config.get('nodes.slowTimeout');
@@ -10,15 +11,15 @@ const SLOW_TIMEOUT = config.get('nodes.slowTimeout');
  */
 class NodesService {
     constructor() {
-        this.nodeStatusCache = new Map();
+        this.nodeStatusCache = {};
 
         // Create some mocked-up node
-        for (var i = 0; i < 10; i++) {
-            this.nodeStatusCache['' + i] = {
-                'time': Date.now(),
-                'voltage': 0.00
-            }
-        }
+        //for (var i = 0; i < 10; i++) {
+        //    this.nodeStatusCache['' + i] = {
+        //        'time': Date.now(),
+        //        'voltage': 0.00
+        //    }
+        //}
     }
 
     async start() {
@@ -31,11 +32,13 @@ class NodesService {
 
     getNodeStatusJson() {
         var nodes = [];
-        for (let [id, status] of Object.entries(this.nodeStatusCache)){
+	logger.info(JSON.stringify(this.nodeStatusCache));
+        for (let id of Object.keys(this.nodeStatusCache)){
+            var nodeStatus = this.nodeStatusCache[id];
             var node = {'id':id,
-                        'voltage': status.voltage}
+                        'voltage': nodeStatus.voltage}
 
-            var dt = Date.now() - status.time;        
+            var dt = Date.now() - nodeStatus.time;
             if (dt < HEALTHY_TIMEOUT){
                 node.health = 'HEALTHY';
             } else if (dt < SLOW_TIMEOUT){

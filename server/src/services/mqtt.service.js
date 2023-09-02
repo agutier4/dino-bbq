@@ -43,7 +43,9 @@ class MQTTBroker {
                     if (id != undefined){
                         var status = {'time':Date.now()}
                         status.voltage = s.voltage;
-                        nodesService.nodeStatusCache.set(id, status);
+                        nodesService.nodeStatusCache['' + id] = status;
+
+                        logger.warn('[MQTT] Received status with ID: "%s"', packet.payload.toString());
                     } else{
                         logger.warn('[MQTT] Received status with no ID: "%s"', packet.payload.toString());
                     }

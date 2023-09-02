@@ -4,7 +4,9 @@ import nodeService from '../services/nodes.service';
 
 const getNodeStatus = async (req, res) => {
     logger.info('[HTTP] Node status API request');
-    res.json(nodeService.getNodeStatusJson());
+    const statusJson = nodeService.getNodeStatusJson();
+    logger.info(JSON.stringify(statusJson));
+    res.json(statusJson);
 };
 
 const handleRoarMessage = async (req, res) => {
