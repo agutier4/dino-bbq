@@ -30,7 +30,7 @@ function NodeCard({ node }) {
             <VStack justifyContent="stretch" alignItems="stretch" flex="1">
                 <Box>DINO-NODE-{node.id}</Box>
                 <Box>Status: {node.health}</Box>
-                <Box>Voltage: {node.voltage || '--'}</Box>
+                <Box>Voltage: {node.voltage || '--'}v</Box>
             </VStack>
         </AspectRatio>
     );

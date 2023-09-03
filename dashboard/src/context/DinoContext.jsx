@@ -71,6 +71,57 @@ export function DinoContextProvider({ children }) {
         }
     };
 
+
+    const sendRoarAllCommand = async (id) => {
+        console.log('sending roar all command...');
+        try {
+            const result = await axios.post(`http://${hostname}:3000/api/roar-all`);
+            toast({
+                title: `Sent roar all command!`,
+                position: 'bottom',
+                isClosable: true,
+                duration: 1000,
+                render: () => (
+                    <Box
+                        color="black"
+                        fontSize="16px"
+                        fontWeight="500"
+                        p={3}
+                        borderRadius="0px"
+                        pointerEvents="none"
+                        userSelect="none"
+                        bg="rgb(255,255,255,0.8)"
+                        border="1px solid rgba(0,0,0,0.1)"
+                    >
+                        Sent roar all command!
+                    </Box>
+                ),
+            });
+        } catch (e) {
+            toast({
+                title: `Failed to send roar all command`,
+                position: 'bottom',
+                isClosable: true,
+                duration: 1000,
+                render: () => (
+                    <Box
+                        color="black"
+                        fontSize="16px"
+                        fontWeight="500"
+                        p={3}
+                        borderRadius="0px"
+                        pointerEvents="none"
+                        userSelect="none"
+                        bg="rgb(255,100,100,0.5)"
+                        border="1px solid rgba(0,0,0,0.1)"
+                    >
+                        Failed to send roar all command!
+                    </Box>
+                ),
+            });
+        }
+    };
+
     const interval = useRef(null);
     useEffect(() => {
         interval.current = setInterval(() => {
@@ -87,6 +138,7 @@ export function DinoContextProvider({ children }) {
             value={{
                 nodes: nodes,
                 sendRoarCommand: sendRoarCommand,
+                sendRoarAllCommand: sendRoarAllCommand
             }}
         >
             {children}

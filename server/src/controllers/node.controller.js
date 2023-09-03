@@ -18,4 +18,13 @@ const handleRoarMessage = async (req, res) => {
     res.end();
 };
 
-export { getNodeStatus, handleRoarMessage };
+const handleRoarAllMessage = async (req, res) => {
+    logger.info('[HTTP] Roar all API request');
+    mqttService.publish({topic:'cmd', payload:`{"id":255}`}, null);
+
+    res.writeHead(200, {'Content-Type': 'text/plain'});
+    res.write('SUCCESS');
+    res.end();
+};
+
+export { getNodeStatus, handleRoarMessage, handleRoarAllMessage };
