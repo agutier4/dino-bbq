@@ -12,7 +12,7 @@ function RoarAll({ node }) {
             bg="rgba(250,250,250,1.0)"
             minW="150px"
             maxW="200px"
-            m="10px"
+            m="2px"
             cursor="pointer"
             onClick={() => {
                 sendRoarAllCommand();
@@ -39,7 +39,7 @@ function RootScreen() {
 
     return (
         <Box
-            p="20px"
+            p="10px"
             display="flex"
             flexDir="column"
             justifyContent="stretch"
@@ -56,6 +56,15 @@ function RootScreen() {
                             <NodeCard node={node} />
                         </WrapItem>
                     ))}
+                    <WrapItem>
+                        <RoarAll />
+                    </WrapItem>
+                    <WrapItem>
+                        <RoarAll />
+                    </WrapItem>
+                    <WrapItem>
+                        <RoarAll />
+                    </WrapItem>
                     <WrapItem>
                         <RoarAll />
                     </WrapItem>

@@ -11,7 +11,7 @@ function NodeCard({ node }) {
             bg="rgba(250,250,250,1.0)"
             minW="150px"
             maxW="200px"
-            m="10px"
+            m="2px"
             cursor="pointer"
             onClick={() => {
                 sendRoarCommand(node.id);
