@@ -54,7 +54,9 @@ function RootScreen() {
                             <NodeCard node={node} />
                         </WrapItem>
                     ))}
-                    <RoarAll />
+                    <WrapItem>
+                        <RoarAll />
+                    </WrapItem>
                 </Wrap>
             </Container>
             <Box flex="1"></Box>
