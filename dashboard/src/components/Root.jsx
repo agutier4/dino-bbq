@@ -45,7 +45,9 @@ function RootScreen() {
             justifyContent="stretch"
             alignItems="stretch"
             flex="1"
-            bg="rgba(0,0,0,0.05)"
+            bgImg="/bg.png"
+            bgRepeat="repeat"
+            bgSize="200px"
         >
             <Container maxWidth="600px">
                 <Wrap spacing={1}>
